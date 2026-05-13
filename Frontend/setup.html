@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purviksha — Device Setup</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .setup-warning {
+      background: rgba(255,210,0,0.08);
+      border: 1px solid rgba(255,210,0,0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--yellow);
+      margin-bottom: 24px;
+      letter-spacing: 0.03em;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px 16px;
+      margin-bottom: 10px;
+      gap: 12px;
+      transition: border-color var(--transition);
+    }
+
+    .item-row:hover { border-color: var(--border-hi); }
+    .item-row.selected { border-color: var(--cyan); background: var(--cyan-dim); }
+    .item-row.selected .item-check { opacity: 1; color: var(--cyan); }
+
+    .item-info { flex: 1; cursor: pointer; }
+
+    .item-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .item-sub {
+      font-size: 0.78rem;
+      font-family: var(--mono);
+      color: var(--text-dim);
+    }
+
+    .item-check {
+      font-size: 1rem;
+      opacity: 0;
+      transition: opacity var(--transition);
+      flex-shrink: 0;
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: 1px solid rgba(255,61,107,0.3);
+      color: var(--red);
+      border-radius: var(--radius-sm);
+      padding: 5px 10px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all var(--transition);
+      letter-spacing: 0.04em;
+    }
+
+    .btn-delete:hover { background: var(--red-dim); }
+
+    .current-assignment {
+      background: var(--green-dim);
+      border: 1px solid rgba(0,245,160,0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: var(--green);
+      display: none;
+      font-family: var(--mono);
+    }
+
+    .success-box {
+      display: none;
+      background: var(--green-dim);
+      border: 1px solid rgba(0,245,160,0.3);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .success-box h3 { color: var(--green); font-size: 1.2rem; margin-bottom: 8px; }
+    .success-box p  { color: var(--text-mid); font-size: 0.88rem; margin-bottom: 20px; font-family: var(--mono); }
+
+    .btn-save {
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      color: #000;
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 52px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 4px 24px rgba(0,212,255,0.25);
+    }
+
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(0,212,255,0.4); }
+    .btn-save:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .register-success {
+      display: none;
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      margin-top: 8px;
+    }
+
+    .btn-register {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 11px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all var(--transition);
+      width: 100%;
+    }
+
+    .btn-register:hover { border-color: var(--cyan); background: var(--cyan-dim); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>⚙️ Purviksha</h1>
+      <span>Device Setup — Admin Only</span>
+    </div>
+    <a href="index.html" style="margin-left: auto;">← Back</a>
+  </div>
+
+  <div class="container" style="margin-top: 28px;">
+
+    <div class="setup-warning">
+      ⚠ Admin only — configure this device once before handing to EMT staff. Settings persist until manually reset.
+    </div>
+
+    <div class="current-assignment" id="currentAssignment">
+      ✓ Assigned: <strong id="currentAmbLabel"></strong> · <strong id="currentHospLabel"></strong>
+      &nbsp;·&nbsp;
+      <a href="#" onclick="resetDevice(); return false;"
+         style="color:var(--red); text-decoration:none; font-size:0.78rem;">Reset</a>
+    </div>
+
+    <div class="success-box" id="successBox">
+      <h3>✓ Device Configured</h3>
+      <p id="successText"></p>
+      <a href="index.html" class="btn-save" style="text-decoration:none; display:inline-block;">
+        Go to Home →
+      </a>
+    </div>
+
+    <div id="setupContent">
+
+      <!-- Select ambulance -->
+      <div class="card">
+        <div class="section-title">🚑 Step 1 — Select Ambulance</div>
+        <div id="ambList"><div class="grid-loading">Loading...</div></div>
+        <span class="error-msg" id="err-amb" style="display:none;">Please select an ambulance</span>
+      </div>
+
+      <!-- Select hospital -->
+      <div class="card">
+        <div class="section-title">🏥 Step 2 — Select Hospital</div>
+        <div id="hospList"><div class="grid-loading">Loading...</div></div>
+        <span class="error-msg" id="err-hosp" style="display:none;">Please select a hospital</span>
+      </div>
+
+      <!-- Register ambulance -->
+      <div class="card">
+        <div class="section-title">➕ Register New Ambulance</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vehicle Number *</label>
+            <input type="text" id="new_vehicle" placeholder="MH12-AB-1234">
+            <span class="error-msg" id="err-vehicle" style="display:none;">Required</span>
+          </div>
+          <div class="form-group">
+            <label>EMT Name *</label>
+            <input type="text" id="new_emt_name" placeholder="Rahul Sharma">
+            <span class="error-msg" id="err-emt-name" style="display:none;">Required</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>EMT ID *</label>
+            <input type="text" id="new_emt_id" placeholder="EMT001">
+            <span class="error-msg" id="err-emt-id" style="display:none;">Required</span>
+          </div>
+          <div class="form-group" style="justify-content:flex-end;">
+            <button class="btn-register" type="button" onclick="registerAmbulance()">
+              Register Ambulance →
+            </button>
+          </div>
+        </div>
+        <div class="register-success" id="amb-success">✓ Ambulance registered successfully.</div>
+      </div>
+
+      <!-- Register hospital -->
+      <div class="card">
+        <div class="section-title">➕ Register New Hospital</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hospital Name *</label>
+            <input type="text" id="new_hosp_name" placeholder="City General Hospital">
+            <span class="error-msg" id="err-hosp-name" style="display:none;">Required</span>
+          </div>
+          <div class="form-group">
+            <label>Location *</label>
+            <input type="text" id="new_hosp_loc" placeholder="Pune, Maharashtra">
+            <span class="error-msg" id="err-hosp-loc" style="display:none;">Required</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <button class="btn-register" type="button" onclick="registerHospital()" style="width:auto; padding: 11px 28px;">
+            Register Hospital →
+          </button>
+        </div>
+        <div class="register-success" id="hosp-success">✓ Hospital registered successfully.</div>
+      </div>
+
+      <!-- Save -->
+      <div style="text-align:center; margin-bottom: 40px;">
+        <button class="btn-save" id="btnSave" type="button" onclick="saveSetup()" disabled>
+          Save Device Configuration →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    const AMB_KEY='purviksha_ambulance_id', AMB_LABEL='purviksha_ambulance_label'
+    const HOSP_KEY='purviksha_hospital_id', HOSP_LABEL='purviksha_hospital_label'
+    let selAmbId=null, selAmbLabel='', selHospId=null, selHospLabel=''
+
+    window.onload = async function() {
+      var eA=localStorage.getItem(AMB_KEY), eH=localStorage.getItem(HOSP_KEY)
+      if (eA && eH) {
+        document.getElementById('currentAmbLabel').textContent = localStorage.getItem(AMB_LABEL)||eA
+        document.getElementById('currentHospLabel').textContent = localStorage.getItem(HOSP_LABEL)||eH
+        document.getElementById('currentAssignment').style.display = 'block'
+      }
+      await loadAmbulances(); await loadHospitals()
+    }
+
+    async function loadAmbulances() {
+      var list = document.getElementById('ambList')
+      try {
+        var ambs = await getAmbulances()
+        if (!ambs||!ambs.length) { list.innerHTML='<div class="grid-loading">No ambulances yet. Register one below.</div>'; return }
+        list.innerHTML=''
+        ambs.forEach(function(a) {
+          var id=a._id||a.id, vehicle=a.vehicle_number||a.vehicleNumber||'Unknown'
+          var emt=a.emt_name||a.emtName||'Unknown EMT', label=vehicle+' — '+emt
+          var row=document.createElement('div'); row.className='item-row'; row.id='ar-'+id
+          row.innerHTML='<div class="item-info" onclick="selAmb(\''+id+'\',\''+label.replace(/'/g,"\\'")+'\',this.parentElement)">' +
+            '<div class="item-title">'+vehicle+'</div><div class="item-sub">'+emt+'</div></div>' +
+            '<div class="item-check">✓</div>' +
+            '<button class="btn-delete" type="button" onclick="delAmb(\''+id+'\')">🗑 Delete</button>'
+          list.appendChild(row)
+        })
+      } catch(e) { list.innerHTML='<div class="grid-loading" style="color:var(--red)">Failed to load. Is backend running?</div>' }
+    }
+
+    function selAmb(id, label, row) {
+      document.querySelectorAll('#ambList .item-row').forEach(function(r){r.classList.remove('selected')})
+      row.classList.add('selected'); selAmbId=id; selAmbLabel=label; checkReady()
+    }
+
+    async function delAmb(id) {
+      if (!confirm('Delete this ambulance?')) return
+      try { await deleteAmbulance(id); if(selAmbId===id){selAmbId=null;selAmbLabel='';checkReady()} await loadAmbulances() }
+      catch(e) { alert('Failed: '+e.message) }
+    }
+
+    async function loadHospitals() {
+      var list = document.getElementById('hospList')
+      try {
+        var hosps = await getHospitals()
+        if (!hosps||!hosps.length) { list.innerHTML='<div class="grid-loading">No hospitals yet. Register one below.</div>'; return }
+        list.innerHTML=''
+        hosps.forEach(function(h) {
+          var id=h._id||h.id, name=h.hospital_name||h.hospitalName||'Unknown', loc=h.location||'—'
+          var row=document.createElement('div'); row.className='item-row'; row.id='hr-'+id
+          row.innerHTML='<div class="item-info" onclick="selHosp(\''+id+'\',\''+name.replace(/'/g,"\\'")+'\',this.parentElement)">' +
+            '<div class="item-title">'+name+'</div><div class="item-sub">📍 '+loc+'</div></div>' +
+            '<div class="item-check">✓</div>' +
+            '<button class="btn-delete" type="button" onclick="delHosp(\''+id+'\')">🗑 Delete</button>'
+          list.appendChild(row)
+        })
+      } catch(e) { list.innerHTML='<div class="grid-loading" style="color:var(--red)">Failed to load. Is backend running?</div>' }
+    }
+
+    function selHosp(id, name, row) {
+      document.querySelectorAll('#hospList .item-row').forEach(function(r){r.classList.remove('selected')})
+      row.classList.add('selected'); selHospId=id; selHospLabel=name; checkReady()
+    }
+
+    async function delHosp(id) {
+      if (!confirm('Delete this hospital?')) return
+      try { await deleteHospital(id); if(selHospId===id){selHospId=null;selHospLabel='';checkReady()} await loadHospitals() }
+      catch(e) { alert('Failed: '+e.message) }
+    }
+
+    function checkReady() {
+      var s=document.getElementById('btnSave')
+      s.disabled=!(selAmbId&&selHospId)
+    }
+
+    function saveSetup() {
+      if (!selAmbId||!selHospId) return
+      localStorage.setItem(AMB_KEY,selAmbId); localStorage.setItem(AMB_LABEL,selAmbLabel)
+      localStorage.setItem(HOSP_KEY,selHospId); localStorage.setItem(HOSP_LABEL,selHospLabel)
+      document.getElementById('currentAmbLabel').textContent=selAmbLabel
+      document.getElementById('currentHospLabel').textContent=selHospLabel
+      document.getElementById('currentAssignment').style.display='block'
+      document.getElementById('setupContent').style.display='none'
+      document.getElementById('successText').textContent='Ambulance: '+selAmbLabel+' · Hospital: '+selHospLabel
+      document.getElementById('successBox').style.display='block'
+    }
+
+    function resetDevice() {
+      if (!confirm('Remove all device configuration?')) return
+      [AMB_KEY,AMB_LABEL,HOSP_KEY,HOSP_LABEL].forEach(function(k){localStorage.removeItem(k)})
+      document.getElementById('currentAssignment').style.display='none'
+      document.getElementById('successBox').style.display='none'
+      document.getElementById('setupContent').style.display='block'
+      document.querySelectorAll('.item-row.selected').forEach(function(r){r.classList.remove('selected')})
+      selAmbId=null; selAmbLabel=''; selHospId=null; selHospLabel=''; checkReady()
+    }
+
+    async function registerAmbulance() {
+      var v=document.getElementById('new_vehicle').value.trim()
+      var n=document.getElementById('new_emt_name').value.trim()
+      var i=document.getElementById('new_emt_id').value.trim()
+      var ok=true
+      function s(id,c){document.getElementById(id).style.display=c?'block':'none';if(c)ok=false}
+      s('err-vehicle',!v); s('err-emt-name',!n); s('err-emt-id',!i)
+      if (!ok) return
+      try {
+        await createAmbulance({vehicle_number:v,emt_name:n,emt_id:i})
+        document.getElementById('new_vehicle').value=''
+        document.getElementById('new_emt_name').value=''
+        document.getElementById('new_emt_id').value=''
+        var el=document.getElementById('amb-success'); el.style.display='block'
+        setTimeout(function(){el.style.display='none'},3000)
+        await loadAmbulances()
+      } catch(e){alert('Failed: '+e.message)}
+    }
+
+    async function registerHospital() {
+      var n=document.getElementById('new_hosp_name').value.trim()
+      var l=document.getElementById('new_hosp_loc').value.trim()
+      var ok=true
+      function s(id,c){document.getElementById(id).style.display=c?'block':'none';if(c)ok=false}
+      s('err-hosp-name',!n); s('err-hosp-loc',!l)
+      if (!ok) return
+      try {
+        await createHospital({hospital_name:n,location:l})
+        document.getElementById('new_hosp_name').value=''
+        document.getElementById('new_hosp_loc').value=''
+        var el=document.getElementById('hosp-success'); el.style.display='block'
+        setTimeout(function(){el.style.display='none'},3000)
+        await loadHospitals()
+      } catch(e){alert('Failed: '+e.message)}
+    }
+  </script>
+
+</body>
+</html>
